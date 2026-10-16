@@ -1,11 +1,6 @@
 package com.inventoryAPIs.demo.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,6 +28,8 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name="SKU",unique=true,nullable = false,length=50)
+    private String sku;
 
 
     @Column(nullable = false, length = 150)
@@ -56,6 +53,10 @@ public class Product {
     @Builder.Default
     @Column(name = "reorder_level", nullable = false)
     private int reorderLevel = 0;
+
+    @ManyToOne
+    @JoinColumn(name="user_id")
+    private User addedBy;
 
     @Builder.Default
     @Column(name = "is_active", nullable = false)

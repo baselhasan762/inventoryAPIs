@@ -1,5 +1,6 @@
 package com.inventoryAPIs.demo.dto;
 
+import com.inventoryAPIs.demo.entity.Category;
 import com.inventoryAPIs.demo.entity.Product;
 import com.inventoryAPIs.demo.entity.User;
 import lombok.Builder;
@@ -17,6 +18,7 @@ public class ProductResponseDTO {
     private final String name;
     private final String description;
     private final Long categoryId;
+    private final String categoryName;
     private final BigDecimal unitPrice;
     private final BigDecimal costPrice;
     private final String unitOfMeasure;
@@ -28,12 +30,14 @@ public class ProductResponseDTO {
 
     public static ProductResponseDTO from(Product product) {
         User addedBy = product.getAddedBy();
+        Category category = product.getCategory();
         return ProductResponseDTO.builder()
                 .id(product.getId())
                 .sku(product.getSku())
                 .name(product.getName())
                 .description(product.getDescription())
-                .categoryId(product.getCategoryId())
+                .categoryId(category != null ? category.getId() : null)
+                .categoryName(category != null ? category.getName() : null)
                 .unitPrice(product.getUnitPrice())
                 .costPrice(product.getCostPrice())
                 .unitOfMeasure(product.getUnitOfMeasure())

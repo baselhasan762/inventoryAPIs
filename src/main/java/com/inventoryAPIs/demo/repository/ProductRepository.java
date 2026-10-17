@@ -11,9 +11,14 @@ import java.util.Optional;
 
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    /** Fetches {@code addedBy} in the same query to avoid one extra select per product. */
-    @EntityGraph(attributePaths = "addedBy")
+    /** Fetches {@code addedBy} and {@code category} in the same query to avoid extra selects per product. */
+    @EntityGraph(attributePaths = {"addedBy", "category"})
     List<Product> findAllByActiveTrue();
+
+    @EntityGraph(attributePaths = {"addedBy", "category"})
+    List<Product> findAllByActiveTrueAndCategoryId(Long categoryId);
+
+    boolean existsByCategoryIdAndActiveTrue(Long categoryId);
 
     Optional<Product> findByIdAndActiveTrue(Long id);
 

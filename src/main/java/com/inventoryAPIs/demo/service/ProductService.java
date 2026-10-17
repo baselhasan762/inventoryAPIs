@@ -4,6 +4,7 @@ import com.inventoryAPIs.demo.dto.LowStockProductDTO;
 import com.inventoryAPIs.demo.dto.ProductRequestDTO;
 import com.inventoryAPIs.demo.dto.ProductResponseDTO;
 import com.inventoryAPIs.demo.dto.ProductUpdateDTO;
+import com.inventoryAPIs.demo.entity.Category;
 import com.inventoryAPIs.demo.entity.Product;
 import com.inventoryAPIs.demo.exception.DuplicateResourceException;
 import com.inventoryAPIs.demo.exception.ResourceNotFoundException;
@@ -24,6 +25,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final CurrentUserProvider currentUserProvider;
+    private final CategoryService categoryService;
 
     public ProductResponseDTO create(ProductRequestDTO request) {
         ensureSkuAvailable(request.getSku());
@@ -32,7 +34,7 @@ public class ProductService {
                 .sku(request.getSku())
                 .name(request.getName())
                 .description(request.getDescription())
-                .categoryId(request.getCategoryId())
+                .category(resolveCategory(request.getCategoryId()))
                 .unitPrice(request.getUnitPrice())
                 .costPrice(request.getCostPrice())
                 .unitOfMeasure(request.getUnitOfMeasure())
@@ -43,9 +45,14 @@ public class ProductService {
         return ProductResponseDTO.from(productRepository.save(product));
     }
 
+    /** Lists all active products, or only those in the given category when {@code categoryId} is set. */
     @Transactional(readOnly = true)
-    public List<ProductResponseDTO> findAll() {
-        return productRepository.findAllByActiveTrue().stream()
+    public List<ProductResponseDTO> findAll(Long categoryId) {
+        List<Product> products = categoryId == null
+                ? productRepository.findAllByActiveTrue()
+                : productRepository.findAllByActiveTrueAndCategoryId(categoryId);
+
+        return products.stream()
                 .map(ProductResponseDTO::from)
                 .toList();
     }
@@ -65,7 +72,7 @@ public class ProductService {
         }
         Optional.ofNullable(request.getName()).ifPresent(product::setName);
         Optional.ofNullable(request.getDescription()).ifPresent(product::setDescription);
-        Optional.ofNullable(request.getCategoryId()).ifPresent(product::setCategoryId);
+        Optional.ofNullable(request.getCategoryId()).map(categoryService::findActive).ifPresent(product::setCategory);
         Optional.ofNullable(request.getUnitPrice()).ifPresent(product::setUnitPrice);
         Optional.ofNullable(request.getCostPrice()).ifPresent(product::setCostPrice);
         Optional.ofNullable(request.getUnitOfMeasure()).ifPresent(product::setUnitOfMeasure);
@@ -83,6 +90,11 @@ public class ProductService {
     private Product findProduct(Long id) {
         return productRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+    }
+
+    /** Category is optional on create; a given id must point to an active category. */
+    private Category resolveCategory(Long categoryId) {
+        return categoryId == null ? null : categoryService.findActive(categoryId);
     }
 
     private void ensureSkuAvailable(String sku) {

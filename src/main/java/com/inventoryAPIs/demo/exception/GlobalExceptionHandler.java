@@ -1,6 +1,7 @@
 package com.inventoryAPIs.demo.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -49,6 +50,22 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateResourceException.class)
     public ProblemDetail handleDuplicate(DuplicateResourceException ex) {
         return problem(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(ResourceInUseException.class)
+    public ProblemDetail handleInUse(ResourceInUseException ex) {
+        return problem(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    public ProblemDetail handleInsufficientStock(InsufficientStockException ex) {
+        return problem(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    /** Lock timeouts or deadlocks between concurrent stock movements; the client can simply retry. */
+    @ExceptionHandler(ConcurrencyFailureException.class)
+    public ProblemDetail handleConcurrencyFailure(ConcurrencyFailureException ex) {
+        return problem(HttpStatus.CONFLICT, "The resource was modified concurrently, please retry");
     }
 
     /** Covers races the service pre-checks cannot, e.g. two concurrent sign-ups with the same email. */

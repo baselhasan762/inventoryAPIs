@@ -1,12 +1,17 @@
 package com.inventoryAPIs.demo.controller;
 
 import com.inventoryAPIs.demo.dto.LowStockProductDTO;
+import com.inventoryAPIs.demo.dto.PageResponseDTO;
 import com.inventoryAPIs.demo.dto.ProductRequestDTO;
 import com.inventoryAPIs.demo.dto.ProductResponseDTO;
 import com.inventoryAPIs.demo.dto.ProductUpdateDTO;
+import com.inventoryAPIs.demo.entity.Product;
 import com.inventoryAPIs.demo.service.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,8 +40,17 @@ public class ProductController {
     }
 
     @GetMapping
-    public List<ProductResponseDTO> findAll(@RequestParam(required = false) Long categoryId) {
-        return productService.findAll(categoryId);
+    public PageResponseDTO<ProductResponseDTO> findAll(
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String search,
+            @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
+        return productService.findAll(categoryId, search, pageable);
+    }
+
+    @GetMapping("/{id}")
+    public ProductResponseDTO findById(@PathVariable Long id){
+       Product p = productService.findProduct(id);
+       return ProductResponseDTO.from(p);
     }
 
     @GetMapping("/low-stock")
@@ -47,6 +61,11 @@ public class ProductController {
     @PatchMapping("/{id}")
     public ProductResponseDTO update(@PathVariable Long id, @Valid @RequestBody ProductUpdateDTO request) {
         return productService.update(id, request);
+    }
+
+    @PatchMapping("/{id}/reactivate")
+    public ProductResponseDTO reactivate(@PathVariable Long id) {
+        return productService.reactivate(id);
     }
 
     @DeleteMapping("/{id}")

@@ -2,13 +2,14 @@ package com.inventoryAPIs.demo.repository;
 
 import com.inventoryAPIs.demo.entity.StockLevel;
 import jakarta.persistence.LockModeType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface StockLevelRepository extends JpaRepository<StockLevel, Long> {
@@ -25,7 +26,12 @@ public interface StockLevelRepository extends JpaRepository<StockLevel, Long> {
               AND s.location.active = true
               AND (:productId IS NULL OR s.product.id = :productId)
               AND (:locationId IS NULL OR s.location.id = :locationId)
-            ORDER BY s.product.sku, s.location.code
             """)
-    List<StockLevel> search(@Param("productId") Long productId, @Param("locationId") Long locationId);
+    Page<StockLevel> search(@Param("productId") Long productId, @Param("locationId") Long locationId,
+                            Pageable pageable);
+
+    boolean existsByLocationIdAndQuantityGreaterThan(Long locationId, int quantity);
+
+    boolean existsByProductIdAndQuantityGreaterThan(Long productId, int quantity);
 }
+

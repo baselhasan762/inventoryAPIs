@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Builder
@@ -20,6 +21,7 @@ public class StockMovementResponseDTO {
     private final MovementType type;
     private final int quantity;
     private final String reason;
+    private final UUID transferId;
     private final Long createdById;
     private final String createdByName;
     private final LocalDateTime createdAt;
@@ -35,6 +37,7 @@ public class StockMovementResponseDTO {
                 .type(movement.getType())
                 .quantity(movement.getQuantity())
                 .reason(movement.getReason())
+                .transferId(movement.getTransferId())
                 .createdById(movement.getCreatedBy().getId())
                 .createdByName(movement.getCreatedBy().getFullName())
                 .createdAt(movement.getCreatedAt())

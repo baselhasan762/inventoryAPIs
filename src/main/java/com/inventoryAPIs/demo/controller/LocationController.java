@@ -47,6 +47,11 @@ public class LocationController {
         return locationService.update(id, request);
     }
 
+    @PatchMapping("/{id}/reactivate")
+    public LocationResponseDTO reactivate(@PathVariable Long id) {
+        return locationService.reactivate(id);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {

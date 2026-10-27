@@ -21,7 +21,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Builder
-@ToString(exclude = {"category"})
+@ToString
 public class Product {
 
     @Id
@@ -58,6 +58,7 @@ public class Product {
 
     @ManyToOne
     @JoinColumn(name="user_id")
+    @ToString.Exclude
     private User addedBy;
 
     @Builder.Default

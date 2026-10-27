@@ -1,14 +1,18 @@
 package com.inventoryAPIs.demo.repository;
 
 import com.inventoryAPIs.demo.entity.StockMovement;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-import java.util.List;
+public interface StockMovementRepository extends JpaRepository<StockMovement, Long>,
+        JpaSpecificationExecutor<StockMovement> {
 
-public interface StockMovementRepository extends JpaRepository<StockMovement, Long> {
-
-    /** Fetches the lazy associations in the same query, since the response DTO reads all three. */
+    /** Redeclared only to fetch the relations the response needs in the same query. */
+    @Override
     @EntityGraph(attributePaths = {"product", "location", "createdBy"})
-    List<StockMovement> findAllByOrderByCreatedAtDesc();
+    Page<StockMovement> findAll(Specification<StockMovement> spec, Pageable pageable);
 }

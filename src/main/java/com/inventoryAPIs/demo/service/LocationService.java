@@ -5,8 +5,10 @@ import com.inventoryAPIs.demo.dto.LocationResponseDTO;
 import com.inventoryAPIs.demo.dto.LocationUpdateDTO;
 import com.inventoryAPIs.demo.entity.Location;
 import com.inventoryAPIs.demo.exception.DuplicateResourceException;
+import com.inventoryAPIs.demo.exception.ResourceInUseException;
 import com.inventoryAPIs.demo.exception.ResourceNotFoundException;
 import com.inventoryAPIs.demo.repository.LocationRepository;
+import com.inventoryAPIs.demo.repository.StockLevelRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ import java.util.Optional;
 public class LocationService {
 
     private final LocationRepository locationRepository;
+    private final StockLevelRepository stockLevelRepository;
 
     @PreAuthorize("hasRole('ADMIN')")
     public LocationResponseDTO create(LocationRequestDTO request) {
@@ -61,10 +64,27 @@ public class LocationService {
         return LocationResponseDTO.from(location);
     }
 
-    /** Soft delete: stock levels and movements keep a foreign key to the location, so it is deactivated instead. */
+    /**
+     * Soft delete: stock levels and movements keep a foreign key to the location, so it is deactivated instead.
+     * Refused while it still holds stock, which would otherwise vanish from every stock query.
+     */
     @PreAuthorize("hasRole('ADMIN')")
     public void delete(Long id) {
-        findLocation(id).setActive(false);
+        Location location = findLocation(id);
+
+        if (stockLevelRepository.existsByLocationIdAndQuantityGreaterThan(id, 0)) {
+            throw new ResourceInUseException("Location still holds stock: " + location.getCode());
+        }
+        location.setActive(false);
+    }
+
+    /** Undoes a soft delete; reactivating an already active location is a no-op. */
+    @PreAuthorize("hasRole('ADMIN')")
+    public LocationResponseDTO reactivate(Long id) {
+        Location location = locationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Location not found with id: " + id));
+        location.setActive(true);
+        return LocationResponseDTO.from(location);
     }
 
     private Location findLocation(Long id) {

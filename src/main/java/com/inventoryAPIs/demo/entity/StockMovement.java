@@ -18,8 +18,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * Append-only ledger entry: no setters, so a recorded movement is never edited.
@@ -54,6 +57,11 @@ public class StockMovement {
 
     @Column(length = 255, updatable = false)
     private String reason;
+
+    /** Shared by the TRANSFER_OUT and TRANSFER_IN pair of one transfer; null for other movements. */
+    @JdbcTypeCode(SqlTypes.CHAR)
+    @Column(name = "transfer_id", length = 36, updatable = false)
+    private UUID transferId;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by", nullable = false, updatable = false)

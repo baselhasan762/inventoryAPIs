@@ -1,19 +1,25 @@
 package com.inventoryAPIs.demo.service;
 
 import com.inventoryAPIs.demo.dto.LowStockProductDTO;
+import com.inventoryAPIs.demo.dto.PageResponseDTO;
 import com.inventoryAPIs.demo.dto.ProductRequestDTO;
 import com.inventoryAPIs.demo.dto.ProductResponseDTO;
 import com.inventoryAPIs.demo.dto.ProductUpdateDTO;
 import com.inventoryAPIs.demo.entity.Category;
 import com.inventoryAPIs.demo.entity.Product;
 import com.inventoryAPIs.demo.exception.DuplicateResourceException;
+import com.inventoryAPIs.demo.exception.ResourceInUseException;
 import com.inventoryAPIs.demo.exception.ResourceNotFoundException;
 import com.inventoryAPIs.demo.repository.ProductRepository;
+import com.inventoryAPIs.demo.repository.StockLevelRepository;
 import com.inventoryAPIs.demo.security.CurrentUserProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +30,7 @@ import java.util.Optional;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final StockLevelRepository stockLevelRepository;
     private final CurrentUserProvider currentUserProvider;
     private final CategoryService categoryService;
 
@@ -45,16 +52,16 @@ public class ProductService {
         return ProductResponseDTO.from(productRepository.save(product));
     }
 
-    /** Lists all active products, or only those in the given category when {@code categoryId} is set. */
+    /**
+     * Lists active products. Both filters are optional: {@code categoryId} limits it to one category and
+     * {@code search} matches part of the name, ignoring case. A blank search counts as no search.
+     */
     @Transactional(readOnly = true)
-    public List<ProductResponseDTO> findAll(Long categoryId) {
-        List<Product> products = categoryId == null
-                ? productRepository.findAllByActiveTrue()
-                : productRepository.findAllByActiveTrueAndCategoryId(categoryId);
+    public PageResponseDTO<ProductResponseDTO> findAll(Long categoryId, String search, Pageable pageable) {
+        String term = StringUtils.hasText(search) ? search.trim() : null;
+        Page<Product> products = productRepository.search(categoryId, term, pageable);
 
-        return products.stream()
-                .map(ProductResponseDTO::from)
-                .toList();
+        return PageResponseDTO.from(products, ProductResponseDTO::from);
     }
 
     @Transactional(readOnly = true)
@@ -81,13 +88,38 @@ public class ProductService {
         return ProductResponseDTO.from(product);
     }
 
-    /** Soft delete: stock levels and movements keep a foreign key to the product, so it is deactivated instead. */
+    /**
+     * Soft delete: stock levels and movements keep a foreign key to the product, so it is deactivated instead.
+     * Refused while any location still holds it, which would otherwise vanish from every stock query.
+     */
     @PreAuthorize("hasRole('ADMIN') or @productSecurity.isOwner(#id, authentication)")
     public void delete(Long id) {
-        findProduct(id).setActive(false);
+        Product product = findProduct(id);
+
+        if (stockLevelRepository.existsByProductIdAndQuantityGreaterThan(id, 0)) {
+            throw new ResourceInUseException("Product still has stock: " + product.getSku());
+        }
+        product.setActive(false);
     }
 
-    private Product findProduct(Long id) {
+    /**
+     * Undoes a soft delete; reactivating an already active product is a no-op.
+     * A category deleted in the meantime is cleared, so the product never points to an inactive category.
+     */
+    @PreAuthorize("hasRole('ADMIN') or @productSecurity.isOwner(#id, authentication)")
+    public ProductResponseDTO reactivate(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+
+        if (product.getCategory() != null && !product.getCategory().isActive()) {
+            product.setCategory(null);
+        }
+        product.setActive(true);
+
+        return ProductResponseDTO.from(product);
+    }
+
+    public Product findProduct(Long id) {
         return productRepository.findByIdAndActiveTrue(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
     }

@@ -11,6 +11,7 @@ import com.inventoryAPIs.demo.entity.MovementType;
 import com.inventoryAPIs.demo.entity.Product;
 import com.inventoryAPIs.demo.entity.StockLevel;
 import com.inventoryAPIs.demo.entity.StockMovement;
+import com.inventoryAPIs.demo.exception.BusinessRuleException;
 import com.inventoryAPIs.demo.exception.ResourceNotFoundException;
 import com.inventoryAPIs.demo.repository.LocationRepository;
 import com.inventoryAPIs.demo.repository.ProductRepository;
@@ -40,7 +41,7 @@ public class StockMovementService {
     /** Records the movement and applies it to the stock level in one transaction, so the two never disagree. */
     public StockMovementResponseDTO create(StockMovementRequestDTO request) {
         if(request.getType() == MovementType.TRANSFER_IN || request.getType() == MovementType.TRANSFER_OUT){
-            throw new IllegalArgumentException("Transfers Are Not Supported in this endpoint , go to /transfers");
+            throw new BusinessRuleException("Use POST /api/stock-movements/transfers for transfers");
         }
         Product product = findProduct(request.getProductId());
         Location location = findLocation(request.getLocationId());

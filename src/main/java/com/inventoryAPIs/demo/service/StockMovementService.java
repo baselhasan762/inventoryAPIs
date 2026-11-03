@@ -66,7 +66,6 @@ public class StockMovementService {
         Location destination = findLocation(request.getToLocationId());
         int quantity = request.getQuantity();
 
-        // Always lock the lower location id first, so two opposite transfers (A->B and B->A) can't deadlock.
         StockLevel sourceStock;
         StockLevel destinationStock;
         if (source.getId() < destination.getId()) {
@@ -100,13 +99,11 @@ public class StockMovementService {
                 StockMovementResponseDTO::from);
     }
 
-    /** Locks the existing row, or starts an empty one if this product has never been stocked at the location. */
     private StockLevel lockStockLevel(Product product, Location location) {
         return stockLevelRepository.findForUpdate(product.getId(), location.getId())
                 .orElseGet(() -> StockLevel.empty(product, location));
     }
 
-    /** The movement type decides the direction; the quantity itself is always positive. */
     private void apply(StockLevel stockLevel, MovementType type, int quantity) {
         switch (type) {
             case IN, TRANSFER_IN -> stockLevel.increase(quantity);

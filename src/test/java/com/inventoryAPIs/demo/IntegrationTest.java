@@ -1,0 +1,15 @@
+package com.inventoryAPIs.demo;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.TestPropertySource;
+
+@SpringBootTest
+@Import(TestContainersConfiguration.class)
+@TestPropertySource(properties = {
+        "spring.datasource.password=unused",
+        "app.admin.password=Test@12345"
+        ,"app.jwt.secret =dGVzdC1vbmx5LXNlY3JldC10ZXN0LW9ubHktc2VjcmV0LXRlc3Qtb25seQ=="
+})
+public abstract class IntegrationTest {
+
+}

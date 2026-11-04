@@ -1,0 +1,9 @@
+target
+.git
+.idea
+*.iml
+config
+.env
+CLAUDE.md
+.claude
+.mcp.json

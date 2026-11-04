@@ -20,16 +20,31 @@ and access is secured with JWT access tokens and rotating refresh tokens.
 ## Tech stack
 
 Java 21 · Spring Boot 4.1 · Spring Security 7 · Spring Data JPA / Hibernate 7 · MySQL ·
-jjwt · springdoc-openapi · Lombok · Maven
+Flyway · jjwt · springdoc-openapi · Lombok · Maven · Docker
 
 ## Getting started
 
-### Prerequisites
+### Run with Docker (recommended)
 
-- Java 21
-- MySQL 8 running locally (the `inventoryapi` database is created on first start)
+The only requirement is Docker. Compose starts the app and a MySQL database,
+and Flyway creates the tables on first start.
 
-### Configuration
+```bash
+cp .env.example .env    # then fill in your own values
+docker compose up --build
+```
+
+The API starts on **http://localhost:8081**. The admin account is `admin@inventory.com`
+with the `ADMIN_PASSWORD` from your `.env`.
+
+| Command | What it does |
+|---|---|
+| `docker compose down` | Stops the containers and keeps the data |
+| `docker compose down -v` | Also deletes the database, for a fresh start |
+
+### Run locally
+
+You need Java 21 and MySQL 8 running locally (the `inventoryapi` database is created on first start).
 
 Secrets are not committed. Create `config/application.properties` in the project root
 (it is gitignored, and Spring Boot loads it automatically on top of the default settings):
@@ -47,7 +62,7 @@ app.admin.email=admin@inventory.com
 app.admin.password=<choose a password>
 ```
 
-### Run
+Then run:
 
 ```bash
 ./mvnw spring-boot:run
@@ -110,6 +125,8 @@ The last active admin can't be demoted or deactivated.
   can't be deactivated
 - **Errors.** Validation, unknown sort fields, bad enum values, missing resources and conflicts
   all return a `ProblemDetail` with the right status (400, 401, 403, 404, 409) instead of a stack trace
+- **Versioned schema.** Flyway owns the database schema through SQL scripts in `src/main/resources/db/migration`.
+  Hibernate only validates that the entities match the tables, so a mismatch stops the app at startup
 
 ## Project structure
 
@@ -127,5 +144,4 @@ src/main/java/com/inventoryAPIs/demo
 
 ## Roadmap
 
-- Database migrations with Flyway
 - Automated tests for the stock logic and security rules

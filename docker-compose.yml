@@ -1,0 +1,31 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: inventoryapi
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_PASSWORD}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app:
+      build: .
+      depends_on:
+        mysql:
+          condition: service_healthy
+      environment:
+        SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/inventoryapi
+        DB_PASSWORD: ${DB_PASSWORD}
+        JWT_SECRET: ${JWT_SECRET}
+        ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ports:
+        - "8081:8081"
+
+volumes:
+   mysql-data:
+
+

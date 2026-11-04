@@ -37,3 +37,6 @@ build/
 
 ### Claude Code (local only) ###
 CLAUDE.md
+
+#FOR DOCKER
+.env

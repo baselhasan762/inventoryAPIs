@@ -5,13 +5,12 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.context.annotation.Bean;
 import org.testcontainers.mysql.MySQLContainer;
 
-
+@TestConfiguration(proxyBeanMethods = false)
 public class TestContainersConfiguration {
+
     @Bean
     @ServiceConnection
-    MySQLContainer mySQLContainer(){
+    MySQLContainer mySQLContainer() {
         return new MySQLContainer("mysql:8.4");
     }
-
-
 }

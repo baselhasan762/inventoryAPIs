@@ -58,7 +58,6 @@ public class StockMovement {
     @Column(length = 255, updatable = false)
     private String reason;
 
-    /** Shared by the TRANSFER_OUT and TRANSFER_IN pair of one transfer; null for other movements. */
     @JdbcTypeCode(SqlTypes.CHAR)
     @Column(name = "transfer_id", length = 36, updatable = false)
     private UUID transferId;

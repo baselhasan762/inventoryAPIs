@@ -20,7 +20,7 @@ and access is secured with JWT access tokens and rotating refresh tokens.
 ## Tech stack
 
 Java 21 · Spring Boot 4.1 · Spring Security 7 · Spring Data JPA / Hibernate 7 · MySQL ·
-Flyway · jjwt · springdoc-openapi · Lombok · Maven · Docker · JUnit 6 · MockMvc · Testcontainers
+Flyway · Actuator · jjwt · springdoc-openapi · Lombok · Maven · Docker · JUnit 6 · MockMvc · Testcontainers
 
 ## Getting started
 
@@ -35,7 +35,9 @@ docker compose up --build
 ```
 
 The API starts on **http://localhost:8081**. The admin account is `admin@inventory.com`
-with the `ADMIN_PASSWORD` from your `.env`.
+with the `ADMIN_PASSWORD` from your `.env`. Docker marks the app healthy once
+`/actuator/health/readiness` answers `UP` (`docker ps` shows the status); `/actuator/health` is public,
+metrics and health details need an admin token.
 
 | Command | What it does |
 |---|---|
@@ -171,7 +173,7 @@ src/main/java/com/inventoryAPIs/demo
 
 ## Roadmap
 
-- Dev and prod profiles, health checks and metrics, structured logging, API versioning
+- Structured logging, CORS, API versioning (`/api/v1`)
 - Load testing with k6, then caching and multiple instances behind nginx
 - Rate limiting with Bucket4j and Redis
 - Orders with expiring stock reservations, and Stripe payments (test mode)

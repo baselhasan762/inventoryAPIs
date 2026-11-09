@@ -20,7 +20,7 @@ and access is secured with JWT access tokens and rotating refresh tokens.
 ## Tech stack
 
 Java 21 · Spring Boot 4.1 · Spring Security 7 · Spring Data JPA / Hibernate 7 · MySQL ·
-Flyway · jjwt · springdoc-openapi · Lombok · Maven · Docker
+Flyway · jjwt · springdoc-openapi · Lombok · Maven · Docker · JUnit 6 · MockMvc · Testcontainers
 
 ## Getting started
 
@@ -69,6 +69,13 @@ Then run:
 ```
 
 The API starts on **http://localhost:8081**.
+
+### Profiles
+
+| Profile | When | Settings |
+|---|---|---|
+| `dev` | Default when no profile is set (running locally) | Local MySQL, SQL logging, Flyway baseline for a pre-existing database |
+| `prod` | `SPRING_PROFILES_ACTIVE=prod` (set by Docker Compose) | Database from `DB_URL` / `DB_USERNAME`, no SQL logging, no defaults: a missing variable stops the app at startup |
 
 ## API documentation
 
@@ -128,6 +135,26 @@ The last active admin can't be demoted or deactivated.
 - **Versioned schema.** Flyway owns the database schema through SQL scripts in `src/main/resources/db/migration`.
   Hibernate only validates that the entities match the tables, so a mismatch stops the app at startup
 
+## Tests
+
+```bash
+./mvnw test
+```
+
+Docker must be running: integration tests start a throwaway MySQL 8.4 container with Testcontainers,
+so they run against the same database engine and Flyway migrations as production, never against your local data.
+
+| Test | What it proves |
+|---|---|
+| `StockLevelTest` | Unit tests of the stock rules: increases, decreases, and refusing to go below zero |
+| `StockConcurrencyTest` | 20 threads buy the last 10 items at once: exactly 10 succeed and stock ends at zero, thanks to the row lock |
+| `StockTransferTest` | A transfer moves stock between locations; an oversized one changes nothing |
+| `AuthFlowTest` | Login, refresh token rotation, and reuse detection revoking every token of the user |
+| `UserAccessTest` | 401 without a token, 403 for the wrong role, no self-assigned admin role, and the last admin can't be removed or demoted |
+
+The concurrency and reuse-detection tests were checked by removing the code they guard
+(the `@Lock`, the `noRollbackFor`) and confirming they fail.
+
 ## Project structure
 
 ```
@@ -144,4 +171,8 @@ src/main/java/com/inventoryAPIs/demo
 
 ## Roadmap
 
-- Automated tests for the stock logic and security rules
+- Dev and prod profiles, health checks and metrics, structured logging, API versioning
+- Load testing with k6, then caching and multiple instances behind nginx
+- Rate limiting with Bucket4j and Redis
+- Orders with expiring stock reservations, and Stripe payments (test mode)
+- CI with GitHub Actions and a cloud deployment

@@ -18,7 +18,9 @@ services:
         mysql:
           condition: service_healthy
       environment:
-        SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/inventoryapi
+        SPRING_PROFILES_ACTIVE: prod
+        DB_URL: jdbc:mysql://mysql:3306/inventoryapi
+        DB_USERNAME: root
         DB_PASSWORD: ${DB_PASSWORD}
         JWT_SECRET: ${JWT_SECRET}
         ADMIN_PASSWORD: ${ADMIN_PASSWORD}
